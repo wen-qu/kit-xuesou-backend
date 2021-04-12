@@ -29,7 +29,10 @@ func main(){
 	}()
 
 	endpoints := endpoint.Endpoints{
-		UidEndpoint: endpoint.MakeUidEndpoint(srv),
+		Login: endpoint.Login(srv),
+		Register: endpoint.Register(srv),
+		ReadProfile: endpoint.ReadProfile(srv),
+		UpdateProfile: endpoint.UpdateProfile(srv),
 	}
 
 	go func(){

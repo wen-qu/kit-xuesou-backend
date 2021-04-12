@@ -3,26 +3,34 @@ package transport
 import (
 	"context"
 	"encoding/json"
-	"errors"
+	"github.com/wen-qu/kit-xuesou-backend/general/errors"
+
+	"github.com/wen-qu/kit-xuesou-backend/user/model"
 	"net/http"
-	"strconv"
 )
 
-type UserRequest struct {
-	Uid int `json:"uid"`
-}
-
-type UserResponse struct {
-	Result string `json:"result"`
-}
-
-func DecodeUid(ctx context.Context, r *http.Request) (interface{}, error) {
-	if r.URL.Query().Get("uid") != "" {
-		uid, _ := strconv.Atoi(r.URL.Query().Get("uid"))
-		return UserRequest{Uid: uid}, nil
+func DecodeLoginRequest(ctx context.Context, r *http.Request) (interface{}, error) {
+	var req model.LoginRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		return nil, errors.BadRequest("para:001", "missing or invalid parameters")
 	}
-	return nil, errors.New("invalid parameters")
+	return req, nil
 }
+
+func DecodeRegisterRequest(ctx context.Context, r *http.Request) (interface{}, error) {
+	return nil, nil
+}
+
+func DecodeReadProfileRequest(ctx context.Context, r *http.Request) (interface{}, error) {
+	return nil, nil
+}
+
+func DecodeUpdateProfileRequest(ctx context.Context, r *http.Request) (interface{}, error) {
+	return nil, nil
+}
+
+
 
 func Encode(ctx context.Context, w http.ResponseWriter, rsp interface{}) error {
 	w.Header().Set("Content-Type", "application/json")
