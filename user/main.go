@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/wen-qu/kit-xuesou-backend/general/db"
 	"github.com/wen-qu/kit-xuesou-backend/user/endpoint"
 	"github.com/wen-qu/kit-xuesou-backend/user/service"
 	"log"
@@ -37,6 +38,7 @@ func main(){
 
 	go func(){
 		log.Println("user service is running on port: ", *addr)
+		db.Init()
 		handler := NewHTTPServer(ctx, endpoints)
 		errChan <- http.ListenAndServe(*addr, handler)
 	}()

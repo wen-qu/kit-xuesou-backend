@@ -2,10 +2,13 @@ package service
 
 import (
 	"database/sql"
-	"github.com/google/uuid"
+	"fmt"
 	"github.com/wen-qu/kit-xuesou-backend/general/db"
 	"github.com/wen-qu/kit-xuesou-backend/general/errors"
 	"github.com/wen-qu/kit-xuesou-backend/user/model"
+	"github.com/wen-qu/kit-xuesou-backend/user/util"
+	"strconv"
+	"time"
 )
 
 type IUserService interface {
@@ -28,10 +31,10 @@ func (u userService)InspectUser(req model.InspectRequest) (model.InspectResponse
 
 	if len(req.Uid) > 0 {
 		row = db.GetUserDB().QueryRow("select uid, username, password, tel, age, sex, email, " +
-			"address, class_num, img from user where uid = ?", req.Uid)
-	} else if len(req.Tel) > 0 {
+			"address, class_num, img from user_profile_table where uid = ?", req.Uid)
+	} else if len(req.Tel) > 0 { // some questions about different logistics last code and this code
 		row = db.GetUserDB().QueryRow("select uid, username, password, tel, age, sex, email, " +
-			"address, class_num, img from user where uid = ? and password = ?", req.Uid, req.Password)
+			"address, class_num, img from user_profile_table where tel = ?", req.Tel)
 	} else {
 		return rsp, errors.BadRequest("para:001", "missing parameters: uid or tel")
 	}
@@ -62,12 +65,16 @@ func (u userService)UpdateUser(req model.UpdateRequest) (model.UpdateResponse, e
 	if err != nil {
 		return rsp, errors.InternalServerError("user.UpdateUser:fatal:001", err.Error())
 	}
+
 	if currentUser.User == nil {
 		return rsp, errors.Forbidden("user:001", "user not existed")
 	}
-	req.User = currentUser.User
 
-	_, err = db.GetUserDB().Exec("update user set username = ?, password = ?, tel = ?, " +
+	if err := util.CopyStruct(req.User, currentUser.User); err != nil {
+		return rsp, err
+	}
+
+	_, err = db.GetUserDB().Exec("update user_profile_table set username = ?, password = ?, tel = ?, " +
 		"age = ?, sex = ?, email = ?, address = ?, class_num = ?, img = ? where uid = ? ",
 		req.User.Username, req.User.Password,
 		req.User.Tel, req.User.Age, req.User.Sex,
@@ -93,7 +100,7 @@ func (u userService)AddUser(req model.AddRequest) (model.AddResponse, error) {
 		Tel: req.User.Tel,
 	})
 	if err != nil {
-		return rsp, errors.InternalServerError("user-srv.UserSrv.AddUser:fatal:001", err.Error())
+		return rsp, errors.InternalServerError("user.AddUser:fatal:001", err.Error())
 	}
 	if user.User != nil {
 		rsp.Status = 400
@@ -101,13 +108,15 @@ func (u userService)AddUser(req model.AddRequest) (model.AddResponse, error) {
 		return rsp, nil
 	}
 
-	uid := "user_" + uuid.New().String()
-	if _, err := db.GetUserDB().Exec("insert into user " +
+
+	uid := "user_" + strconv.Itoa(int(time.Now().Unix()))
+	fmt.Println(uid)
+	if _, err := db.GetUserDB().Exec("insert into user_profile_table " +
 		"(uid, username, password, tel, email, sex, age, address, class_num, img) " +
 		"values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", uid, req.User.Username, req.User.Password,
 		req.User.Tel, req.User.Email, req.User.Sex, req.User.Age, req.User.Address,
 		req.User.ClassNum, req.User.Img); err != nil {
-		return rsp, errors.InternalServerError("user-srv.UserSrv.AddUser:fatal:002", err.Error())
+		return rsp, errors.InternalServerError("user.AddUser:fatal:002", err.Error())
 	}
 
 	// create table [uid]_user_class_table, [uid]_user_chatting_table, [uid]_user_evaluations_table
@@ -118,7 +127,7 @@ func (u userService)AddUser(req model.AddRequest) (model.AddResponse, error) {
 		"`bought_time` varchar(20) not null," +
 		"`agency_id` varchar(20) not null" +
 		") engine=innodb default charset=utf8"); err != nil {
-		return rsp, errors.InternalServerError("user-srv.UserSrv.AddUser:fatal:003", err.Error())
+		return rsp, errors.InternalServerError("user.AddUser:fatal:003", err.Error())
 	}
 	tableName = uid + "_user_chatting_table"
 	if _, err := db.GetUserDB().Exec("create table `" + tableName + "` (" +
@@ -129,7 +138,7 @@ func (u userService)AddUser(req model.AddRequest) (model.AddResponse, error) {
 		"`agency_id` varchar(20) not null," +
 		"`agency_name` varchar(50) not null" +
 		") engine=innodb default charset=utf8"); err != nil {
-		return rsp, errors.InternalServerError("user-srv.UserSrv.AddUser:fatal:004", err.Error())
+		return rsp, errors.InternalServerError("user.AddUser:fatal:004", err.Error())
 	}
 	tableName = uid + "_user_evaluation_table"
 	if _, err := db.GetUserDB().Exec("create table `" + tableName + "` (" +
@@ -143,7 +152,7 @@ func (u userService)AddUser(req model.AddRequest) (model.AddResponse, error) {
 		"`detail` varchar(10000)," +
 		"`pics` varchar(700)" +
 		") engine=innodb default charset=utf8"); err != nil {
-		return rsp, errors.InternalServerError("user-srv.UserSrv.AddUser:fatal:005", err.Error())
+		return rsp, errors.InternalServerError("user.AddUser:fatal:005", err.Error())
 	}
 
 	rsp.Status = 200
@@ -163,7 +172,7 @@ func (u userService)DeleteUser(req model.DeleteRequest) (model.DeleteResponse, e
 		Tel: req.Uid,
 	})
 	if err != nil {
-		return rsp, errors.InternalServerError("user-srv.UserSrv.DeleteUser:fatal:001", err.Error())
+		return rsp, errors.InternalServerError("user.DeleteUser:fatal:001", err.Error())
 	}
 
 	if goalUser.User == nil {
