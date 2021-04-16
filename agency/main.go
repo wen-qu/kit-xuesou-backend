@@ -32,8 +32,12 @@ func main(){
 	endpoints := endpoint.Endpoints{
 		Login: endpoint.Login(srv),
 		Register: endpoint.Register(srv),
-		ReadProfile: endpoint.ReadProfile(srv),
-		UpdateProfile: endpoint.UpdateProfile(srv),
+		GetAgencies: endpoint.GetAgencies(srv),
+		Search: endpoint.Search(srv),
+		GetAgencyDetail: endpoint.GetAgencyDetail(srv),
+		UpdateAgencyDetail: endpoint.UpdateAgencyDetail(srv),
+		GetEvaluation: endpoint.GetEvaluation(srv),
+		GetNearbyAgencies: endpoint.GetNearbyAgencies(srv),
 	}
 
 	go func(){

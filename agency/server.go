@@ -13,7 +13,7 @@ func NewHTTPServer(ctx context.Context, endpoints endpoint.Endpoints) http.Handl
 	r := mux.NewRouter()
 	r.Use(authMiddleWare)
 
-	s := r.PathPrefix("/user").Subrouter()
+	s := r.PathPrefix("/api/agency").Subrouter()
 
 	s.Methods("POST").Path("/login").Handler(httptransport.NewServer(
 		endpoints.Login,
@@ -25,14 +25,34 @@ func NewHTTPServer(ctx context.Context, endpoints endpoint.Endpoints) http.Handl
 		transport.DecodeRegisterRequest,
 		transport.Encode,
 	))
-	s.Methods("GET").Path("/readProfile").Handler(httptransport.NewServer(
-		endpoints.ReadProfile,
-		transport.DecodeReadProfileRequest,
+	s.Methods("GET").Path("/agencies").Handler(httptransport.NewServer(
+		endpoints.GetAgencies,
+		transport.DecodeGetAgenciesRequest,
 		transport.Encode,
 	))
-	s.Methods("POST").Path("/updateProfile").Handler(httptransport.NewServer(
-		endpoints.UpdateProfile,
-		transport.DecodeUpdateProfileRequest,
+	s.Methods("GET").Path("/search").Handler(httptransport.NewServer(
+		endpoints.Search,
+		transport.DecodeSearchRequest,
+		transport.Encode,
+	))
+	s.Methods("GET").Path("/agencyDetail").Handler(httptransport.NewServer(
+		endpoints.GetAgencyDetail,
+		transport.DecodeGetAgencyDetailRequest,
+		transport.Encode,
+	))
+	s.Methods("PUT").Path("/agencyProfile").Handler(httptransport.NewServer(
+		endpoints.UpdateAgencyDetail,
+		transport.DecodeUpdateAgencyDetailRequest,
+		transport.Encode,
+	))
+	s.Methods("GET").Path("/evaluation").Handler(httptransport.NewServer(
+		endpoints.GetEvaluation,
+		transport.DecodeGetEvaluationRequest,
+		transport.Encode,
+	))
+	s.Methods("GET").Path("/nearbyAgencies").Handler(httptransport.NewServer(
+		endpoints.GetNearbyAgencies,
+		transport.DecodeGetNearbyAgenciesRequest,
 		transport.Encode,
 	))
 	return r

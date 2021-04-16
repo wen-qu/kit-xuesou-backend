@@ -45,8 +45,6 @@ func DecodeUpdateProfileRequest(ctx context.Context, r *http.Request) (interface
 	return req, nil
 }
 
-
-
 func Encode(ctx context.Context, w http.ResponseWriter, rsp interface{}) error {
 	w.Header().Set("Content-Type", "application/json")
 	return json.NewEncoder(w).Encode(rsp)

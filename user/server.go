@@ -13,7 +13,7 @@ func NewHTTPServer(ctx context.Context, endpoints endpoint.Endpoints) http.Handl
 	r := mux.NewRouter()
 	r.Use(authMiddleWare)
 
-	s := r.PathPrefix("/user").Subrouter()
+	s := r.PathPrefix("/api/user").Subrouter()
 
 	s.Methods("POST").Path("/login").Handler(httptransport.NewServer(
 		endpoints.Login,
@@ -25,12 +25,12 @@ func NewHTTPServer(ctx context.Context, endpoints endpoint.Endpoints) http.Handl
 		transport.DecodeRegisterRequest,
 		transport.Encode,
 	))
-	s.Methods("GET").Path("/readProfile").Handler(httptransport.NewServer(
+	s.Methods("GET").Path("/profile").Handler(httptransport.NewServer(
 		endpoints.ReadProfile,
 		transport.DecodeReadProfileRequest,
 		transport.Encode,
 	))
-	s.Methods("POST").Path("/updateProfile").Handler(httptransport.NewServer(
+	s.Methods("PUT").Path("/profile").Handler(httptransport.NewServer(
 		endpoints.UpdateProfile,
 		transport.DecodeUpdateProfileRequest,
 		transport.Encode,
