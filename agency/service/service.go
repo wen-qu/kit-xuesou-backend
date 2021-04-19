@@ -20,7 +20,6 @@ type IAgencyService interface {
 	ReadEvaluations(req model.ReadEvaluationsRequest) (model.ReadEvaluationsResponse, error)
 	AddEvaluation(req model.AddEvaluationRequest) (model.AddEvaluationResponse, error)
 	UpdateEvaluation(req model.UpdateEvaluationRequest) (model.UpdateEvaluationResponse, error)
-	DeleteEvaluation(req model.DeleteEvaluationRequest) (model.DeleteEvaluationResponse, error)
 	GetNearbyAgencies(req model.GetNearbyAgenciesRequest) (model.GetNearbyAgenciesResponse, error)
 }
 
@@ -482,10 +481,6 @@ func (agency agencyService)UpdateEvaluation(req model.UpdateEvaluationRequest) (
 	rsp.Status = 200
 
 	return rsp, nil
-}
-
-func (agency agencyService)DeleteEvaluation(req model.DeleteEvaluationRequest) (model.DeleteEvaluationResponse, error) {
-	return model.DeleteEvaluationResponse{}, nil
 }
 
 func (agency agencyService)GetNearbyAgencies(req model.GetNearbyAgenciesRequest) (model.GetNearbyAgenciesResponse, error) {
