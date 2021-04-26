@@ -1,6 +1,10 @@
 package service
 
-import "github.com/wen-qu/kit-xuesou-backend/teacher/model"
+import (
+	"github.com/wen-qu/kit-xuesou-backend/general/errors"
+	"github.com/wen-qu/kit-xuesou-backend/teacher/model"
+	"regexp"
+)
 
 type ITeacherService interface {
 	ReadTeachers(req model.ReadTeachersRequest) (model.ReadTeachersResponse, error)
@@ -16,6 +20,13 @@ func NewService() ITeacherService {
 }
 
 func (teacher teacherService) ReadTeachers(req model.ReadTeachersRequest) (model.ReadTeachersResponse, error) {
+	var rsp model.ReadTeachersResponse
+	if matched, _ := regexp.Match("/^agency_[0-9]{10}$/", []byte(req.AgencyID)); !matched {
+		return rsp, errors.BadRequest("para:002", "invalid parameters: agencyID")
+	}
+	if matched, _ := regexp.Match("/^teacher_[0-9]{10}$/", []byte(req.TeacherID)); !matched {
+		return rsp, errors.BadRequest("para:002", "invalid parameters: teacherID")
+	}
 	return model.ReadTeachersResponse{}, nil
 }
 

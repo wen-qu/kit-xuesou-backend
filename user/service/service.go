@@ -2,11 +2,11 @@ package service
 
 import (
 	"database/sql"
-	"fmt"
 	"github.com/wen-qu/kit-xuesou-backend/general/db"
 	"github.com/wen-qu/kit-xuesou-backend/general/errors"
 	"github.com/wen-qu/kit-xuesou-backend/user/model"
 	"github.com/wen-qu/kit-xuesou-backend/user/util"
+	"regexp"
 	"strconv"
 	"time"
 )
@@ -58,12 +58,23 @@ func (u userService)InspectUser(req model.InspectRequest) (model.InspectResponse
 func (u userService)UpdateUser(req model.UpdateRequest) (model.UpdateResponse, error) {
 	var rsp model.UpdateResponse
 
+	if len(req.User.Uid) == 0 && len(req.User.Tel) == 0 {
+		return rsp, errors.BadRequest("para:001", "missing parameters")
+	}
+
+	if ok, _ := regexp.Match("^user_\\d{10}$", []byte(req.User.Uid)); len(req.User.Uid) > 0 && !ok {
+		return rsp, errors.BadRequest("para:002", "invalid parameter: uid")
+	}
+	if ok, _ := regexp.Match("^1[3-9]\\d{9}$", []byte(req.User.Tel)); len(req.User.Tel) > 0 && !ok {
+		return rsp, errors.BadRequest("para:002", "invalid parameter: tel")
+	}
+
 	currentUser, err := u.InspectUser(model.InspectRequest{
 		Uid: req.User.Uid,
 		Tel: req.User.Tel,
 	})
 	if err != nil {
-		return rsp, errors.InternalServerError("user.UpdateUser:fatal:001", err.Error())
+		return rsp, err
 	}
 
 	if currentUser.User == nil {
@@ -94,13 +105,21 @@ func (u userService)UpdateUser(req model.UpdateRequest) (model.UpdateResponse, e
 func (u userService)AddUser(req model.AddRequest) (model.AddResponse, error) {
 	var rsp model.AddResponse
 	if req.User == nil {
-		return rsp, errors.BadRequest("para:001", "missing parameters")
+		return rsp, errors.BadRequest("para:001", "missing parameters: User")
 	}
+	if len(req.User.Tel) == 0 {
+		return rsp, errors.BadRequest("para:001", "missing parameters: tel")
+	}
+
+	if matched, _ := regexp.Match("^1[3-9]\\d{9}$", []byte(req.User.Tel)); !matched {
+		return rsp, errors.BadRequest("para:002", "invalid parameter: tel")
+	}
+
 	user, err := u.InspectUser(model.InspectRequest{
 		Tel: req.User.Tel,
 	})
 	if err != nil {
-		return rsp, errors.InternalServerError("user.AddUser:fatal:001", err.Error())
+		return rsp, err
 	}
 	if user.User != nil {
 		rsp.Status = 400
@@ -108,9 +127,7 @@ func (u userService)AddUser(req model.AddRequest) (model.AddResponse, error) {
 		return rsp, nil
 	}
 
-
 	uid := "user_" + strconv.Itoa(int(time.Now().Unix()))
-	fmt.Println(uid)
 	if _, err := db.GetUserDB().Exec("insert into user_profile_table " +
 		"(uid, username, password, tel, email, sex, age, address, class_num, img) " +
 		"values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", uid, req.User.Username, req.User.Password,
@@ -165,6 +182,13 @@ func (u userService)DeleteUser(req model.DeleteRequest) (model.DeleteResponse, e
 	var rsp model.DeleteResponse
 	if len(req.Tel) == 0 && len(req.Uid) == 0 {
 		return rsp, errors.BadRequest("para:002", "missing parameters")
+	}
+
+	if ok, _ := regexp.Match("^user_\\d{10}$", []byte(req.Uid)); len(req.Uid) > 0 && !ok {
+		return rsp, errors.BadRequest("para:002", "invalid parameter: uid")
+	}
+	if ok, _ := regexp.Match("^1[3-9]\\d{9}$", []byte(req.Tel)); len(req.Tel) > 0 && !ok {
+		return rsp, errors.BadRequest("para:002", "invalid parameter: tel")
 	}
 
 	goalUser, err := u.InspectUser(model.InspectRequest{

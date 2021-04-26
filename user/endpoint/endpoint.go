@@ -107,8 +107,8 @@ func UpdateProfile(userService service.IUserService) endpoint.Endpoint {
 		var rsp model.UpdateProfileResponse
 		req := request.(model.UpdateProfileRequest)
 
-		if len(req.Uid) == 0 {
-			return rsp, errors.BadRequest("para:001", "missing parameters")
+		if match, _ := regexp.Match("/^user_\\d{10}$/", []byte(req.Uid)); !match {
+			return rsp, errors.BadRequest("para:001", "invalid parameter: uid")
 		}
 
 		switch req.InformationType {
@@ -144,7 +144,6 @@ func ReadProfile(userService service.IUserService) endpoint.Endpoint {
 		if len(req.Uid) == 0 && len(req.Tel) == 0 {
 			return rsp, errors.BadRequest("para:001", "missing parameters")
 		}
-		fmt.Println(req.Uid, req.Tel)
 		if ok, _ := regexp.Match("^user_\\d{10}$", []byte(req.Uid)); len(req.Uid) > 0 && !ok {
 			return rsp, errors.BadRequest("para:002", "invalid parameter: uid")
 		}

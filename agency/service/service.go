@@ -8,7 +8,9 @@ import (
 	"github.com/wen-qu/kit-xuesou-backend/general/db"
 	"github.com/wen-qu/kit-xuesou-backend/general/errors"
 	"regexp"
+	"strconv"
 	"strings"
+	"time"
 )
 
 type IAgencyService interface {
@@ -99,13 +101,15 @@ func (agency agencyService)ReadAgencyDetails(req model.ReadAgencyRequest) (model
 
 func (agency agencyService)InspectAgency(req model.InspectAgencyRequest) (model.InspectAgencyResponse, error) {
 	var rsp model.InspectAgencyResponse
+	var tags string
+	var photos string
+
 	if len(req.Tel) == 0 || len(req.Password) == 0 {
 		return rsp, errors.BadRequest("agency:001", "missing parameters")
 	}
 
 	currAgency := new(model.Agency)
-	var tags string
-	var photos string
+
 	err := db.GetAgencyDB().QueryRow("select agency_id, name, rating, comments, order, " +
 		"tags, address, address_detail, icon, photos from agency_profile_table where " +
 		"tel = ? and password = ?", req.Tel, req.Password).Scan(&currAgency.AgencyID, &currAgency.Name,
@@ -132,6 +136,10 @@ func (agency agencyService)AddAgency(req model.AddAgencyRequest) (model.AddAgenc
 		return rsp, errors.BadRequest("para:001", "missing parameters")
 	}
 
+	if matched, _ := regexp.Match("^1[3-9]\\d{9}$", []byte(req.Agency.Tel)); !matched {
+		return rsp, errors.BadRequest("para:002", "invalid parameter: tel")
+	}
+
 	var currAgencyID string
 	err := db.GetAgencyDB().QueryRow("select agency_id from agency_profile_table where " +
 		"tel = ?", req.Agency.Tel).Scan(&currAgencyID)
@@ -146,7 +154,7 @@ func (agency agencyService)AddAgency(req model.AddAgencyRequest) (model.AddAgenc
 
 	var tableName string
 	var agencyID string
-	agencyID = uuid.New().String()
+	agencyID = "agency_" + strconv.Itoa(int(time.Now().Unix()))
 	if _, err := db.GetAgencyDB().Exec("insert into agency_profile_table (" +
 		"agency_id, name, password, tel, comments, order, tags, address, address_detail, " +
 		"icon, photos, brand_history, characteristics) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -224,6 +232,14 @@ func (agency agencyService)UpdateAgency(req model.UpdateAgencyRequest) (model.Up
 		return rsp, errors.BadRequest("para:001", "missing parameters")
 	}
 
+	if matched, _ := regexp.Match("/^agency_[0-9]{10}$/", []byte(req.Agency.AgencyID)); !matched {
+		return rsp, errors.BadRequest("para:002", "invalid parameter: agencyID")
+	}
+
+	if matched, _ := regexp.Match("/^1[3-9][0-9]{9}$/", []byte(req.Agency.Tel)); !matched {
+		return rsp, errors.BadRequest("para:002", "invalid parameter: tel")
+	}
+
 	currentAgency, err := agency.ReadAgencyDetails(model.ReadAgencyRequest{
 		AgencyID:    req.Agency.AgencyID,
 	})
@@ -270,15 +286,15 @@ func (agency agencyService)DeleteAgency(req model.DeleteAgencyRequest) (model.De
 
 func (agency agencyService)ReadEvaluations(req model.ReadEvaluationsRequest) (model.ReadEvaluationsResponse, error) {
 	var rsp model.ReadEvaluationsResponse
-	if matched, _ := regexp.Match("/^agency_[0-9]{13}$/", []byte(req.AgencyID)); !matched {
+	if matched, _ := regexp.Match("/^agency_[0-9]{10}$/", []byte(req.AgencyID)); !matched {
 		return rsp, errors.BadRequest("para:002", "invalid parameters: agencyID")
 	}
 
-	if matched, _ := regexp.Match("/^user_[0-9]{13}$/", []byte(req.Uid)); !matched {
+	if matched, _ := regexp.Match("/^user_[0-9]{10}$/", []byte(req.Uid)); !matched {
 		return rsp, errors.BadRequest("para:002", "invalid parameters: uid")
 	}
 
-	if matched, _ := regexp.Match("/^evalua_[0-9]{13}$/", []byte(req.EvaluationID)); !matched {
+	if matched, _ := regexp.Match("/^evalua_[0-9]{10}$/", []byte(req.EvaluationID)); !matched {
 		return rsp, errors.BadRequest("para:002", "invalid parameters: evaluationID")
 	}
 
@@ -376,15 +392,15 @@ func (agency agencyService)AddEvaluation(req model.AddEvaluationRequest) (model.
 		return rsp, errors.BadRequest("para:001", "missing parameters")
 	}
 
-	if matched, _ := regexp.Match("/^agency_[0-9]{13}$/", []byte(req.AgencyID)); !matched {
+	if matched, _ := regexp.Match("/^agency_[0-9]{10}$/", []byte(req.AgencyID)); !matched {
 		return rsp, errors.BadRequest("para:002", "invalid parameters: agencyID")
 	}
 
-	if matched, _ := regexp.Match("/^user_[0-9]{13}$/", []byte(req.Uid)); !matched {
+	if matched, _ := regexp.Match("/^user_[0-9]{10}$/", []byte(req.Uid)); !matched {
 		return rsp, errors.BadRequest("para:002", "invalid parameters: uid")
 	}
 
-	if matched, _ := regexp.Match("/^class_[0-9]{13}$/", []byte(req.Evaluation.Class.ClassID)); !matched {
+	if matched, _ := regexp.Match("/^class_[0-9]{10}$/", []byte(req.Evaluation.Class.ClassID)); !matched {
 		return rsp, errors.BadRequest("para:002", "invalid parameters: classID")
 	}
 
@@ -424,19 +440,19 @@ func (agency agencyService)UpdateEvaluation(req model.UpdateEvaluationRequest) (
 		return rsp, errors.BadRequest("para:001", "missing parameters")
 	}
 
-	if matched, _ := regexp.Match("/^agency_[0-9]{13}$/", []byte(req.AgencyID)); !matched {
+	if matched, _ := regexp.Match("/^agency_[0-9]{10}$/", []byte(req.AgencyID)); !matched {
 		return rsp, errors.BadRequest("para:002", "invalid parameters: agencyID")
 	}
 
-	if matched, _ := regexp.Match("/^user_[0-9]{13}$/", []byte(req.Uid)); !matched {
+	if matched, _ := regexp.Match("/^user_[0-9]{10}$/", []byte(req.Uid)); !matched {
 		return rsp, errors.BadRequest("para:002", "invalid parameters: uid")
 	}
 
-	if matched, _ := regexp.Match("/^class_[0-9]{13}$/", []byte(req.Evaluation.Class.ClassID)); !matched {
+	if matched, _ := regexp.Match("/^class_[0-9]{10}$/", []byte(req.Evaluation.Class.ClassID)); !matched {
 		return rsp, errors.BadRequest("para:002", "invalid parameters: classID")
 	}
 
-	if matched, _ := regexp.Match("/^evalua_[0-9]{13}$/", []byte(req.Evaluation.EvaluationID)); !matched {
+	if matched, _ := regexp.Match("/^evalua_[0-9]{10}$/", []byte(req.Evaluation.EvaluationID)); !matched {
 		return rsp, errors.BadRequest("para:002", "invalid parameters: evaluationID")
 	}
 

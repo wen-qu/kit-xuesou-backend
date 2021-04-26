@@ -2,11 +2,11 @@ package service
 
 import (
 	"database/sql"
-	"github.com/google/uuid"
 	"github.com/wen-qu/kit-xuesou-backend/class/model"
 	"github.com/wen-qu/kit-xuesou-backend/general/db"
 	"github.com/wen-qu/kit-xuesou-backend/general/errors"
 	"regexp"
+	"strconv"
 	"time"
 )
 
@@ -29,9 +29,6 @@ func (class classService)ReadClass(req model.ReadClassRequest) (model.ReadClassR
 		return rsp, errors.BadRequest("para:001", "missing parameters")
 	}
 
-	if matched, _ := regexp.Match("/^agency_[0-9]{13}$/", []byte(req.AgencyID)); !matched {
-		return rsp, errors.BadRequest("para:002", "invalid parameters")
-	}
 	rows, err := db.GetAgencyDB().Query("select agency_id, class_id, price, name, stu_number, age, level, sales from " +
 		req.AgencyID + "_agency_class_table")
 
@@ -68,7 +65,7 @@ func (class classService)AddClass(req model.AddClassRequest) (model.AddClassResp
 	tableName := req.Class.AgencyID + "_agency_class_table"
 	createTime := time.Now().String()[:19] // e.g. "2006-01-02 15:04:05"
 	lastUpdateTime := createTime
-	classID := "class_" + uuid.New().String()
+	classID := "class_" + strconv.Itoa(int(time.Now().Unix()))
 
 	_, err := db.GetAgencyDB().Exec("insert into " + tableName + "(agency_id, class_id, price, name, " +
 		"stu_number, age, level, sales, create_time, last_update_time) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -95,11 +92,6 @@ func (class classService)UpdateClass(req model.UpdateClassRequest) (model.Update
 		return rsp, errors.BadRequest("para:002", "invalid parameters: classID")
 	}
 
-	if len(req.Class.Name) == 0 {
-		return rsp, errors.BadRequest("para:002", "invalid parameters: name")
-	}
-
-
 	currentClass, err := class.ReadClass(model.ReadClassRequest{
 		AgencyID: req.Class.AgencyID,
 	})
@@ -110,6 +102,10 @@ func (class classService)UpdateClass(req model.UpdateClassRequest) (model.Update
 		return rsp, errors.Forbidden("class:001", "class not existed")
 	}
 	req.Class = currentClass.Classes[0]
+
+	if len(req.Class.Name) == 0 {
+		return rsp, errors.BadRequest("para:002", "invalid parameters: name")
+	}
 
 	tableName := req.Class.AgencyID + "_agency_class_name"
 	lastUpdateTime := time.Now().String()[:19]
