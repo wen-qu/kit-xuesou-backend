@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"sync"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -35,7 +36,9 @@ func Init() {
 	if err != nil {
 		fmt.Println(err)
 	}
-
+	dbUser.SetMaxIdleConns(20)
+	dbUser.SetMaxOpenConns(100)
+	dbUser.SetConnMaxLifetime(time.Hour)
 	inited = true
 }
 

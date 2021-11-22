@@ -11,12 +11,16 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 )
 
 func main(){
 	addr := flag.String("http", ":8090", "http listen address")
 	flag.Parse()
+
+	var m sync.Map
+	m.Load("123")
 
 	ctx := context.Background()
 
@@ -44,4 +48,7 @@ func main(){
 	}()
 
 	log.Fatalln(<-errChan)
+
+
+
 }
